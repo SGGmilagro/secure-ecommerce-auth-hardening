@@ -1,249 +1,237 @@
-# Node.js E-Commerce API 
+# Secure E-commerce Backend  
+### JWT Authentication with Refresh Token Rotation
 
-This full E-Commerce API build using Express and Mongo. Here it contains all the required functionalities of a full-fledged E-commerce API like User registration, User Login, Category Add, Edit & Delete, Product Add, Edit, Delete, Add product feature image & Add product images, Order creation and etc...
+---
 
-## Setup
- 
-```
-    $ git clone https://github.com/dinushchathurya/nodejs-ecommerce-api.git
-    $ cd nodejs-ecommerce-api
-    $ npm install
-```
-  - Duplicate and database.configexample.js as database.confi.js and fill in environment variables
+## About This Project
 
-  ### Run The Service
-  ```
-  $ nodemon app.js
-  ```
-## API Endpoints
+This repository is based on the original open-source project:
 
-## User Routes
+**Node.js E-Commerce API**  
+by [Dinush Chathurya](https://dinushchathurya.github.io/)
 
-### * Create User
+The original project provides a complete Express + MongoDB E-commerce backend with support for:
 
-`POST |  /api/v1/users/register` 
+- User management  
+- Categories  
+- Products  
+- Orders  
+- Image uploads  
 
-| Key       | Value          |
-| --------- | -----------    |
-| name      | Admin          |
-| email     | admin@admin.com|
-| password  | password       |
-| phone     | +947187520     |
-| isAdmin   | true           |
-| street    | Main Street    |
-| apartment | Block C        |
-| zip       | 10870          |
-| city      | Colombo        |
-| country   | SriLanka       |
+This fork extends the original foundation by implementing a **production-style authentication and token security architecture**, including refresh token rotation, hashing, revocation, and protected route middleware.
 
-### * Login User
+---
 
-`POST |  /api/v1/users/login` 
+# Security Enhancements Added in This Fork
 
-| Key        | Value          |
-| ---------  | -----------    |
-| email      | admin@admin.com|
-| password   | password       |
+This fork introduces a modern authentication system with:
 
-### * Get Users
+- Short-lived JWT access tokens (15 min)
+- Cryptographically secure refresh tokens
+- Refresh token hashing (SHA-256)
+- Refresh token rotation
+- Refresh token revocation
+- Protected route middleware
+- Proper HTTP status enforcement (401 / 403)
 
-`GET |  /api/v1/users` 
+The goal is to demonstrate backend security best practices layered on top of a full-featured E-commerce API.
 
-### * Get Single Users
+---
 
-`GET |  /api/v1/users/{id}` 
+# Authentication Architecture
 
-### * Delete User
+##  Access Tokens
+- JWT-based
+- 15-minute expiration
+- Sent via:
+  	Authorization: Bearer <access_token>
+	- Used to access protected routes
 
-`DELETE |  /api/v1/users/{id}` 
+##  Refresh Tokens
+- 64-byte cryptographically secure random tokens
+- Hashed before storing in database
+- Valid for 7 days
+- Rotated on every refresh
+- Revoked after use (prevents replay attacks)
 
-### * Get Users Count
+---
 
-`GET |  /api/v1/users/get/count` 
+#  Token Lifecycle
 
-## Category Routes
+## 1️Login
+- Validate credentials (bcrypt)
+- Issue access token
+- Generate refresh token
+- Hash and store refresh token
+- Return both tokens
 
-### * Create Category
+## 2️Access Protected Route
+- Client sends access token
+- Middleware verifies JWT
+- If expired → 403
+- If missing → 401
 
-`POST |  /api/v1/categories` 
+## 3️Refresh Token Rotation
+- Client sends refresh token
+- Server verifies hash
+- Old token revoked
+- New refresh token issued
+- New access token issued
 
-| Key   | Value      |
-| ------| ---------- |
-| name  | Category 1 |
-| icon  | icon-health|
-| color | #55879     |
+## 4️Logout
+- Refresh token marked as revoked
+- Session invalidated
 
-### * Get Categories
+---
 
-`GET |  /api/v1/categories` 
+#  API Endpoints
 
-### * Get Single Category
+## Public Authentication Routes
+POST /api/v1/users/register
+POST /api/v1/users/login
+POST /api/v1/users/refresh
+POST /api/v1/users/logout
 
-`GET |  /api/v1/categories/{id}` 
+## Protected User Routes
+GET /api/v1/users
+GET /api/v1/users/:id
+GET /api/v1/users/get/count
+DELETE /api/v1/users/:id
 
-### * Update Category
 
-`PUT |  /api/v1/categories/{id}` 
+---
 
-| Key   | Value      |
-| ------| ---------- |
-| name  | Category 1 |
-| icon  | icon-health|
-| color | #55879     |
+#  Original E-Commerce API Features
 
-### * Delete Category
+The original project includes:
 
-`DELETE |  /api/v1/categories/{id}`
+## Users
+- Register
+- Login
+- List users
+- Get single user
+- Delete user
+- User count
 
-## Product Routes
+## Categories
+- Create
+- Read
+- Update
+- Delete
 
-### * Create Product
+## Products
+- Create
+- Update
+- Delete
+- Upload product images
+- Featured products
+- Product counts
 
-`POST |  /api/v1/products` 
+## Orders
+- Create order
+- Get orders
+- Get total sales
+- Get user orders
+- Update order
+- Delete order
 
-| Key            | Value           |
-| ---------      | -----------     |
-| name           | Product 1       |
-| description    | Description     |
-| richDescription| Rich Description|
-| image          | image           |
-| brand          | Brand 1         |
-| price          | 50              |
-| category       | {category_id}   |
-| countInStock   | 100             |
-| rating         | 4.5             |
-| numReviews     | 40              |
-| isFeatured     | true            |
+---
 
-### * Get Products
+#  Project Structure
+config/
+helpers/
+models/
+routes/
+app.js
 
-`GET |  /api/v1/products` 
+Security-related additions:
 
-###  * Get Single Category
+- `helpers/requireAuth.js`
+- `models/RefreshToken.js`
+- Updated `routes/users.js` authentication logic
+- Environment-based configuration
 
-`GET |  /api/v1/products/{id}` 
+---
 
-###  * Get Prodcut Counts
+#  Environment Variables
 
-`GET |  /api/v1/products/get/count` 
+Create a `.env` file:
+API_URL=/api/v1
+MONGODB_URI=mongodb://... ... .../ecommerce
+secret=your_super_secret_key
 
-###  * Get Featured Prodcut Counts
+---
 
-`GET |  /api/v1/products/get/featured/{count}`
+# Run Locally
+git clone <your-fork-url>
+cd nodejs-ecommerce-api
+npm install
+node app.js
 
-### * Upload Galley Images
+Server runs on: https://localhost3000
 
-`POST |  /api/v1/products/gallery-images/{id}`
-| Key            | Value           |
-| ---------      | -----------     |
-| images         | Array of images |
 
-### * Update Product
+---
 
-`PUT |  /api/v1/products` 
-| Key            | Value           |
-| ---------      | -----------     |
-| name           | Product 1       |
-| description    | Description     |
-| richDescription| Rich Description|
-| image          | image           |
-| brand          | Brand 1         |
-| price          | 50              |
-| category       | {category_id}   |
-| countInStock   | 100             |
-| rating         | 4.5             |
-| numReviews     | 40              |
-| isFeatured     | true            |
+#  Security Design Decisions
 
-### * Delete Product
+| Feature | Purpose |
+|----------|----------|
+| bcrypt (12 rounds) | Secure password storage |
+| Short-lived access tokens | Limit exposure window |
+| Refresh token hashing | Protect against DB compromise |
+| Token rotation | Prevent replay attacks |
+| Revocation flag | Enable forced logout |
+| Environment variables | Protect secrets |
 
-`DELETE |  /api/v1/products/{id}`
+---
 
-## Orders Routes
+#  Purpose of This Fork
 
-### * Create Order
+This fork was created to demonstrate:
 
-`POST |  /api/v1/orders` 
-```
-{
-	"orderItems":[
-		{
-			"quantity": 3,
-			"product" : "602e9c348e700335d8532b14"
-		},
-			{
-			"quantity": 2,
-			"product" : "602bde0161fcc409fc149734"
-		}
-	],
-	"shippingAddress1" : "No 45,Park Street",
-	"shippingAddress2" : "No 46,Main Street",
-	"city" : "Colombo",
-	"zip" : "10600t",
-	"country" : "Sri Lanka",
-	"phone" : "+94717185748",
-	"user" : "602e9b718e700335d8532b13"
-}
-```
-### * Get Orders
+- Secure authentication architecture
+- JWT lifecycle management
+- Token rotation strategies
+- Backend middleware enforcement
+- Practical security engineering in Node.js
 
-`GET |  /api/v1/orders` 
+---
 
-### * Get Single Order
+# Original Author Credit
 
-`GET |  /api/v1/orders/{id}` 
+Original repository:  
+**Node.js E-Commerce API**  
+by [Dinush Chathurya](https://dinushchathurya.github.io/)  
+Blog: https://codingtricks.io/
 
-### * Get Total Order Count
+This fork builds upon the original work and extends it with authentication hardening features.
 
-`GET |  /api/v1/orders/get/count`
+---
 
-### * Get Total Sales
+# License
 
-`GET |  /api/v1/orders/get/totalsales`
+This project retains the original MIT License.
 
-### * Get User Order
+Copyright (c) 2020 Dinush Chathurya
 
-`GET |  /api/v1/orders/get/usersorders/{userid}`
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files, to deal in the Software without restriction...
 
-### * Update Single Order
+---
 
-`PUT |  /api/v1/orders/{id}` 
+#  What This Demonstrates
 
-### * Delete Single Order
+- Production-style JWT authentication
+- Refresh token rotation & revocation
+- Secure backend architecture design
+- REST API implementation with Express
+- MongoDB integration
+- Environment-based configuration
 
-`DELETE |  /api/v1/orders/{id}` 
+---
 
-## Author
-[Dinush Chathurya](https://dinushchathurya.github.io/)
+<p align="center">
+  Built with security in mind.
+</p>
 
-## License
 
-Copyright (c) 2020 <a href="https://dinushchathurya.github.io/">Dinush Chathurya</a> and <a href="https://codingtricks.io/">codingtricks.io</a>
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-## Blog
-
-https://codingtricks.io/
-
-
-## 
-
-<p ><h2 align="center">Happy<i class="fa fa-heart" style="color:red;"></i> Coding<i class="fa fa-code" style="color:orange;"> </i></h2></p>
